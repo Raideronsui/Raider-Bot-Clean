@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-BOT_TOKEN = 7586933538:AAEdrgOLMGkKzpA94558_1uLj25rxb7NKds
+BOT_TOKEN = "7586933538:AAEdrgOLMGkKzpA94558_1uLj25rxb7NKds"
 
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("Raider Bot is live and ready to trade!")
