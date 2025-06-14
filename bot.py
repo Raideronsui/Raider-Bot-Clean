@@ -16,7 +16,7 @@ def help_command(update: Update, context: CallbackContext):
         "/sell - Simulate a sell trade"
     )
 
-if __name__ == '__main__':
+def main():
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
@@ -25,3 +25,6 @@ if __name__ == '__main__':
 
     updater.start_polling()
     updater.idle()
+
+if __name__ == '__main__':
+    main()
