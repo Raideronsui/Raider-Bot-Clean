@@ -1,40 +1,37 @@
 from flask import Flask, request
-from telegram import Update, Bot
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext
-import os
+from telegram import Bot, Update
+from telegram.ext import Dispatcher, CommandHandler
 
-TOKEN = os.getenv("BOT_TOKEN")
-bot = Bot(token=TOKEN)
+BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 
+bot = Bot(token=BOT_TOKEN)
 app = Flask(__name__)
-dispatcher = Dispatcher(bot, None, workers=0, use_context=True)
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Raider Bot is live and running via webhook!")
+dispatcher = Dispatcher(bot, None, workers=0)
 
-def help_command(update: Update, context: CallbackContext):
-    update.message.reply_text(
-        "🤖 Raider Bot Help:\n"
-        "/start - Start the bot\n"
-        "/help - Show this help message\n"
-        "/price - Get current SUI price\n"
-        "/buy - Simulate a buy trade\n"
-        "/sell - Simulate a sell trade"
-    )
+# Commands
+def start(update, context):
+    update.message.reply_text("Raider Bot is live!")
+
+def help_command(update, context):
+    update.message.reply_text("Use /start or /help")
 
 # Register command handlers
 dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(CommandHandler("help", help_command))
 
-@app.route(f"/{TOKEN}", methods=["POST"])
+# Webhook endpoint
+@app.route(f'/{BOT_TOKEN}', methods=['POST'])
 def webhook():
     update = Update.de_json(request.get_json(force=True), bot)
     dispatcher.process_update(update)
-    return "ok"
+    return 'ok'
 
-@app.route("/", methods=["GET"])
+# Keep alive (for health check)
+@app.route('/')
 def index():
-    return "Raider Bot Webhook is active."
+    return 'Bot is running.'
 
-if __name__ == "__main__":
-    app.run(port=10000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
+
