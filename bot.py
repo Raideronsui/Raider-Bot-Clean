@@ -1,13 +1,16 @@
-import logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+from flask import Flask, request
+from telegram import Update, Bot
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext
+import os
 
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+TOKEN = os.getenv("BOT_TOKEN")
+bot = Bot(token=TOKEN)
 
-BOT_TOKEN = "7586933538:AAEdrgOLMGkKzpA94558_1uLj25rxb7NKds"
+app = Flask(__name__)
+dispatcher = Dispatcher(bot, None, workers=0, use_context=True)
 
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Raider Bot is live and ready to trade!")
+    update.message.reply_text("Raider Bot is live and running via webhook!")
 
 def help_command(update: Update, context: CallbackContext):
     update.message.reply_text(
@@ -19,15 +22,19 @@ def help_command(update: Update, context: CallbackContext):
         "/sell - Simulate a sell trade"
     )
 
-def main():
-    updater = Updater(BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
+# Register command handlers
+dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(CommandHandler("help", help_command))
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help_command))
+@app.route(f"/{TOKEN}", methods=["POST"])
+def webhook():
+    update = Update.de_json(request.get_json(force=True), bot)
+    dispatcher.process_update(update)
+    return "ok"
 
-    updater.start_polling()
-    updater.idle()
+@app.route("/", methods=["GET"])
+def index():
+    return "Raider Bot Webhook is active."
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    app.run(port=10000)
