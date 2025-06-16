@@ -1,37 +1,36 @@
+import os
 from flask import Flask, request
-from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
+# Get bot token from environment
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-bot = Bot(token=BOT_TOKEN)
-app = Flask(__name__)
+# Set up the Flask app
+flask_app = Flask(__name__)
 
-dispatcher = Dispatcher(bot, None, workers=0)
+# Command handler
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Hello from Raider Bot!")
 
-# Commands
-def start(update, context):
-    update.message.reply_text("Raider Bot is live!")
+# Create Telegram application
+telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
+telegram_app.add_handler(CommandHandler("start", start))
 
-def help_command(update, context):
-    update.message.reply_text("Use /start or /help")
+# Set webhook route for Telegram
+@flask_app.route("/webhook", methods=["POST"])
+async def webhook():
+    update = Update.de_json(request.get_json(force=True), telegram_app.bot)
+    await telegram_app.process_update(update)
+    return "ok"
 
-# Register command handlers
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(CommandHandler("help", help_command))
+# Run bot polling locally (optional for testing)
+if __name__ == "__main__":
+    import asyncio
+    async def main():
+        await telegram_app.initialize()
+        await telegram_app.start()
+        await telegram_app.updater.start_polling()
+        print("Bot is polling...")
 
-# Webhook endpoint
-@app.route(f'/{BOT_TOKEN}', methods=['POST'])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return 'ok'
-
-# Keep alive (for health check)
-@app.route('/')
-def index():
-    return 'Bot is running.'
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
-
+    asyncio.run(main())
